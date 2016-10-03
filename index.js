@@ -1,4 +1,3 @@
-// const jsdom = require('jsdom');
 const canvas = require('canvas');
 const imageType = require('image-type');
 
