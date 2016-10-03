@@ -1,32 +1,48 @@
-var resemblejs = require('resemblejs');
-var canvas     = require('canvas');
-var imageType  = require('image-type');
+// const jsdom = require('jsdom');
+const canvas = require('canvas');
+const imageType = require('image-type');
 
-module.exports = function() {
-    //override FileReader
-    this.FileReader = function(){};
-    this.FileReader.prototype.readAsDataURL = function(buffer) {
-        this.onload({
-            target: {
-                result: 'data:image/' + imageType(buffer) + ';base64,' + buffer.toString('base64')
-            }
-        });
-    };
+function overrideWindow() {
+  const doc = {};
+  doc.createElement = function (tag) {
+    return (tag !== 'canvas')
+      ? false
+      : new canvas;
+  };
+  return {
+    document: doc
+  }
+}
 
-    //override Image
-    this.Image = canvas.Image;
-    this.Image.prototype.setAttribute = function() {};
+function overrideFileReader() {
+  const FileReader = function () { };
+  FileReader.prototype.readAsDataURL = function (buffer) {
+    console.log(`buffer`, buffer)
+    this.onload({
+      target: {
+        result: 'data:image/' + imageType(buffer) + ';base64,' + buffer.toString('base64')
+      }
+    });
+  };
+  return FileReader;
+}
 
-    //override document.createElement('canvas')
-    this.document = {
-        createElement: function(tag) {
-            if(tag !== 'canvas') {
-                return false;
-            }
+function overrideImage() {
+  const Image = canvas.Image;
+  Image.prototype.setAttribute = function () { };
+  return Image;
+}
 
-            return new canvas;
-        }
-    };
-
-    return resemblejs.resemble.apply(this, arguments);
+module.exports = function () {
+  if (typeof window === "undefined"){
+    global.window = overrideWindow()
+  }
+  if (typeof FileReader === "undefined"){
+    global.FileReader = overrideFileReader()
+  }
+  if (typeof Image === "undefined"){
+    global.Image = overrideImage()
+  }
+  const resemblejs = require('resemblejs');
+  return resemblejs.apply(this, arguments);
 };
