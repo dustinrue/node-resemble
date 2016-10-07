@@ -16,7 +16,6 @@ function overrideWindow() {
 function overrideFileReader() {
   const FileReader = function () { };
   FileReader.prototype.readAsDataURL = function (buffer) {
-    console.log(`buffer`, buffer)
     this.onload({
       target: {
         result: 'data:image/' + imageType(buffer) + ';base64,' + buffer.toString('base64')
